@@ -1,0 +1,35 @@
+version: '3.0'
+
+services:
+
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kp-task-php
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    volumes:
+      - .:/var/www/html
+    networks:
+      - kp
+  
+  apache:
+    image: httpd:alpine3.15
+    container_name: kp-task-apache
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    ports:
+      - "80:80"
+    volumes:
+      - .:/var/www/html
+      # - ./docker-files/nginx/etc/nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - kp
+
+networks:
+  kp:
+    driver: bridge
+
