@@ -1,43 +1,60 @@
-# Dockerfile untuk Web server apache + PHP
-
-# Image diturunkan dari Ubuntu LTS
 FROM ubuntu:20.04
 
-# php7 node_module apache
 
-# U pdate database paket dan instal semua yang diperlukan
-# curl dan lynx-cur digunakan untuk debugging container
-# Enable apache mods.
-# Update file PHP.ini , enable-kan tag dan quieten logging.
-RUN apt-get update
+# Set debian frontend to noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get install php7.3
-
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpng-dev \
-    libfreetype6-dev \
-    locales \
-    zip \
-    jpegoptim optipng pngquant gifsicle \
-    nano \
-    libzip-dev \
-    unzip \
-    git \
-    libonig-dev \
+# Install apache, PHP 7.4 and supplimentary programs.
+RUN apt update && \
+    apt-get -y upgrade && \
+    apt-get -y install \
+    apache2 \
+    php \
+    php-cli \
+    libapache2-mod-php \
+    php-gd \
+    php-curl \
+    php-json \
+    php-mbstring \
+    php-mysql \
+    php-xml \
+    php-xsl \
+    php-zip \
     curl
 
-#RUN docker-php-ext-install pdo_mysql mbstring zip exif pcntl
+# Enable apache mods.
+RUN a2enmod php7.4
+RUN a2enmod rewrite
 
-# Port 80 dipublish ke Host
-EXPOSE 80
+# Update the PHP.ini file, enable <? ?> tags and quieten logging.
+RUN sed -i "s/short_open_tag = Off/short_open_tag = On/" /etc/php/7.4/apache2/php.ini
+RUN sed -i "s/error_reporting = .*$/error_reporting = E_ERROR | E_WARNING | E_PARSE/" /etc/php/7.4/apache2/php.ini
 
-# Tambahkan halaman web (aplikasi) default ke /var/www/
+# Manually set up the apache environment variables
+ENV APACHE_RUN_USER www-data
+ENV APACHE_RUN_GROUP www-data
+ENV APACHE_LOG_DIR /var/log/apache2
+ENV APACHE_LOCK_DIR /var/lock/apache2
+ENV APACHE_PID_FILE /var/run/apache2.pid
+
+
+# Copy this repo into place.
 COPY . /var/www/html
 
-# Update situs apache default dengan konfigurasi yang kita buat.
-# COPY ./config.conf /etc/apache2/sites-enabled/000-default.conf
+# Update the default apache site with the config we created.
+ADD apache2.conf /etc/apache2/sites-enabled/000-default.conf
 
-# Secara default, jalankan apache.
-# CMD /usr/sbin/apache2ctl -D FOREGROUND
+#Install composer to container.
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# Set work directory.
+WORKDIR /var/www/html
+
+# composer install will run every time we start the container.
+CMD ["sh", "-c", "composer install"] 
+
+# Expose apache.
+EXPOSE 80
+
+# By default start up apache in the foreground, override with /bin/bash for interative.
+CMD /usr/sbin/apache2ctl -D FOREGROUND

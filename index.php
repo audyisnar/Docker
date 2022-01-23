@@ -1,6 +1,6 @@
 <?php
 
-     require __DIR__.'\vendor\autoload.php';
+     require __DIR__.'/vendor/autoload.php';
      use Nesk\Puphpeteer\Puppeteer;
 
      $url = 'https://en.antaranews.com/rss/news.xml';

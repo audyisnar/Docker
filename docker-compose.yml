@@ -10,26 +10,14 @@ services:
     restart: unless-stopped
     tty: true
     stdin_open: true
-    volumes:
-      - .:/var/www/html
-    networks:
-      - kp
-  
-  apache:
-    image: httpd:alpine3.15
-    container_name: kp-task-apache
-    restart: unless-stopped
-    tty: true
-    stdin_open: true
     ports:
       - "80:80"
     volumes:
       - .:/var/www/html
-      # - ./docker-files/nginx/etc/nginx/conf.d/:/etc/nginx/conf.d/
+    working_dir: /var/www/html
     networks:
       - kp
 
 networks:
   kp:
     driver: bridge
-
